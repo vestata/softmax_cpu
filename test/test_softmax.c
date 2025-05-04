@@ -8,7 +8,7 @@
 void test_softmax_basic() {
     float input[] = {1.0f, 2.0f, 3.0f};
     float output[3];
-    softmax(input, output, 3);
+    softmax_scalar(input, output, 3);
 
     float expected[] = {0.0900306f, 0.244728f, 0.665241f};
 

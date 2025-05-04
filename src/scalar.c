@@ -1,6 +1,7 @@
 #include "softmax.h"
 
-void softmax(const float* input, float* output, int size) {
+void softmax_scalar(const float *input, float *output, int size)
+{
     float max = -FLT_MAX;
     for (int i = 0; i < size; i++) {
         if (input[i] > max) max = input[i];

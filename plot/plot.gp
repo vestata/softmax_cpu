@@ -1,9 +1,14 @@
-set terminal pngcairo size 800,600 enhanced font 'Arial,10'
+set datafile separator ","
+set terminal png size 1000,600
 set output 'plot/softmax_plot.png'
-set title 'Softmax Execution Time vs Input Size'
-set xlabel 'Input Size'
-set ylabel 'Execution Time (ms)'
+
+set title "Softmax Performance Comparison"
+set xlabel "Input Size"
+set ylabel "Execution Time (ms)"
 set grid
-set datafile separator comma
-set key autotitle columnheader
-plot 'data/softmax_time.csv' using 1:2 skip 1 with lines title 'Softmax'
+set key outside top center
+
+plot \
+  'data/softmax_time_scalar.csv' every ::1 using 1:2 with linespoints title 'Scalar', \
+  'data/softmax_time_avx2.csv' every ::1 using 1:2 with linespoints title 'AVX2'
+

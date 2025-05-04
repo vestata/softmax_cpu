@@ -6,7 +6,7 @@ int main() {
     float output[3];
     int size = 3;
 
-    softmax(input, output, size);
+    softmax_scalar(input, output, size);
 
     printf("Softmax result:\n");
     for (int i = 0; i < size; i++) {

@@ -4,6 +4,9 @@
 #include <float.h>
 #include <math.h>
 
-void softmax(const float* input, float* output, int size);
+typedef void (*softmax_func_t)(const float *input, float *output, int size);
+
+void softmax_scalar(const float *input, float *output, int size);
+void softmax_256(const float *input, float *output, int size);
 
 #endif
