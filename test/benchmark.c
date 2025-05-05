@@ -1,9 +1,4 @@
-#define _POSIX_C_SOURCE 199309L
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <math.h>
-#include "../include/softmax.h"
+#include "test_utils.h"
 
 #define MAX_SIZE 300000
 #define STEP 1000
@@ -17,19 +12,6 @@
 #else
 #error "Invalid SOFTMAX_VERSION"
 #endif
-
-float* generate_input(int size) {
-    float* arr = (float*)malloc(sizeof(float) * size);
-    for (int i = 0; i < size; i++) {
-        arr[i] = (float)rand() / RAND_MAX * 10.0f;
-    }
-    return arr;
-}
-
-double time_diff(struct timespec start, struct timespec end) {
-    return (end.tv_sec - start.tv_sec) * 1e3 +
-           (end.tv_nsec - start.tv_nsec) / 1e6;
-}
 
 int main() {
     FILE *fp = fopen(OUT_FILE, "w");
@@ -47,7 +29,7 @@ int main() {
         struct timespec start, end;
         clock_gettime(CLOCK_MONOTONIC, &start);
 
-        FUNC(input, output, size);  // 呼叫指定版本
+        FUNC(input, output, size);
 
         clock_gettime(CLOCK_MONOTONIC, &end);
 

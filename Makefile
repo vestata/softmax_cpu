@@ -35,11 +35,11 @@ $(TEST_TARGET): $(TEST_SRC)
 # Benchmark rule: build both scalar and avx2
 benchmark: $(BENCHMARK_SCALAR) $(BENCHMARK_AVX2)
 
-$(BENCHMARK_SCALAR): $(TEST_DIR)/benchmark.c $(SRC_DIR)/scalar.c
+$(BENCHMARK_SCALAR): $(TEST_DIR)/benchmark.c $(TEST_DIR)/test_utils.c $(SRC_DIR)/scalar.c
 	@mkdir -p $(BUILD_DIR) $(DATA_DIR)
 	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=0 $^ -o $@ -lm
 
-$(BENCHMARK_AVX2): $(TEST_DIR)/benchmark.c $(SRC_DIR)/scalar.c $(SRC_DIR)/avx.c
+$(BENCHMARK_AVX2): $(TEST_DIR)/benchmark.c $(TEST_DIR)/test_utils.c $(SRC_DIR)/avx.c
 	@mkdir -p $(BUILD_DIR) $(DATA_DIR)
 	$(CC) $(CFLAGS) -mavx2 -DSOFTMAX_VERSION=1 $^ -o $@ -lm
 

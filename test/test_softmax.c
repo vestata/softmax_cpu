@@ -1,7 +1,5 @@
 #include <assert.h>
-#include <math.h>
-#include <stdio.h>
-#include "softmax.h"
+#include "test_utils.h"
 
 #define EPSILON 1e-5
 
