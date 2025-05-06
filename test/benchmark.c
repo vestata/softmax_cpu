@@ -1,7 +1,7 @@
 #include "test_utils.h"
 
 #define MAX_SIZE 300000
-#define STEP 1000
+#define STEP 512
 
 #if SOFTMAX_VERSION == 0
 #define FUNC softmax_scalar
@@ -22,7 +22,7 @@ int main() {
 
     fprintf(fp, "size,time_ms\n");
 
-    for (int size = 1; size <= MAX_SIZE; size += STEP) {
+    for (int size = 256; size <= MAX_SIZE; size += STEP) {
         float *input = generate_input(size);
         float *output = (float *) malloc(sizeof(float) * size);
 
