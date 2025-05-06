@@ -16,5 +16,6 @@ extern const int softmax_table_size;
 
 void softmax_scalar(const float *input, float *output, int size);
 void softmax_256(const float *input, float *output, int size);
+void softmax_256_vexpf(const float *input, float *output, int size);
 
 #endif
