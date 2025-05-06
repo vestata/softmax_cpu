@@ -1,4 +1,3 @@
-#define _POSIX_C_SOURCE 199309L
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
