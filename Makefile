@@ -10,6 +10,7 @@ PLOT_DIR = plot
 SCALAR_OBJ = $(BUILD_DIR)/scalar.o
 AVX_OBJ = $(BUILD_DIR)/avx.o
 AVX_VEXPF_OBJ = $(BUILD_DIR)/avx_vexpf.o
+ONLINE_SCALAR_OBJ = $(BUILD_DIR)/online_scalar.o
 TABLE_OBJ = $(BUILD_DIR)/softmax.o
 MAIN_OBJ = $(BUILD_DIR)/main.o
 TEST_UTILS_OBJ = $(BUILD_DIR)/test_utils.o
@@ -18,6 +19,7 @@ TEST_SOFTMAX_OBJ = $(BUILD_DIR)/test_softmax.o
 BENCHMARK_OBJ_SCALAR  = $(BUILD_DIR)/benchmark_scalar.o
 BENCHMARK_OBJ_AVX2    = $(BUILD_DIR)/benchmark_avx2.o
 BENCHMARK_OBJ_AVX2_VEXPF = $(BUILD_DIR)/benchmark_avx2_vexpf.o
+BENCHMARK_OBJ_ONLINE_SCALAR = $(BUILD_DIR)/benchmark_online_scalar.o
 
 # Executables
 TARGET = $(BUILD_DIR)/main
@@ -25,6 +27,7 @@ TEST_TARGET = $(BUILD_DIR)/test_softmax
 BENCHMARK_SCALAR = $(BUILD_DIR)/benchmark_scalar
 BENCHMARK_AVX2 = $(BUILD_DIR)/benchmark_avx2
 BENCHMARK_AVX2_VEXPF = $(BUILD_DIR)/benchmark_avx2_vexpf
+BENCHMARK_ONLINE_SCALAR = $(BUILD_DIR)/benchmark_online_scalar
 PLOT_OUTPUT = $(PLOT_DIR)/softmax_plot.png
 
 .PHONY: all clean test benchmark plot
@@ -41,6 +44,9 @@ $(DATA_DIR):
 # === Object Rules ===
 $(SCALAR_OBJ): $(SRC_DIR)/scalar.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
+
+$(ONLINE_SCALAR_OBJ): $(SRC_DIR)/online_scalar.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@ -O2
 
 $(AVX_OBJ): $(SRC_DIR)/avx.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -mavx2 -c $< -o $@
@@ -69,8 +75,11 @@ $(BENCHMARK_OBJ_AVX2): $(TEST_DIR)/benchmark.c | $(BUILD_DIR)
 $(BENCHMARK_OBJ_AVX2_VEXPF): $(TEST_DIR)/benchmark.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=2 -mavx2 -c $< -o $@
 
+$(BENCHMARK_OBJ_ONLINE_SCALAR): $(TEST_DIR)/benchmark.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=3 -c $< -o $@
+
 # Targets
-$(TARGET): $(MAIN_OBJ) $(SCALAR_OBJ) $(AVX_OBJ) $(AVX_VEXPF_OBJ) $(TABLE_OBJ)
+$(TARGET): $(MAIN_OBJ) $(SCALAR_OBJ) $(AVX_OBJ) $(AVX_VEXPF_OBJ) $(ONLINE_SCALAR_OBJ) $(TABLE_OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ -lm
 
 $(TEST_TARGET): $(TEST_SOFTMAX_OBJ) $(SCALAR_OBJ)
@@ -80,15 +89,18 @@ test: $(TEST_TARGET)
 	./$(TEST_TARGET)
 
 # Benchmark Executables
-benchmark: $(BENCHMARK_SCALAR) $(BENCHMARK_AVX2) $(BENCHMARK_AVX2_VEXPF)
+benchmark: $(BENCHMARK_SCALAR) $(BENCHMARK_AVX2) $(BENCHMARK_AVX2_VEXPF) $(BENCHMARK_ONLINE_SCALAR)
 
-$(BENCHMARK_SCALAR): $(BENCHMARK_OBJ_SCALAR) $(TEST_UTILS_OBJ) $(SCALAR_OBJ) $(AVX_OBJ) $(AVX_VEXPF_OBJ) $(TABLE_OBJ)
+$(BENCHMARK_SCALAR): $(BENCHMARK_OBJ_SCALAR) $(TEST_UTILS_OBJ) $(SCALAR_OBJ) $(AVX_OBJ) $(AVX_VEXPF_OBJ) $(ONLINE_SCALAR_OBJ) $(TABLE_OBJ)
 	$(CC) $(CFLAGS) -mavx2 $^ -o $@ -lm
 
-$(BENCHMARK_AVX2): $(BENCHMARK_OBJ_AVX2) $(TEST_UTILS_OBJ) $(SCALAR_OBJ) $(AVX_OBJ) $(AVX_VEXPF_OBJ) $(TABLE_OBJ)
+$(BENCHMARK_AVX2): $(BENCHMARK_OBJ_AVX2) $(TEST_UTILS_OBJ) $(SCALAR_OBJ) $(AVX_OBJ) $(AVX_VEXPF_OBJ) $(ONLINE_SCALAR_OBJ) $(TABLE_OBJ)
 	$(CC) $(CFLAGS) -mavx2 $^ -o $@ -lm
 
-$(BENCHMARK_AVX2_VEXPF): $(BENCHMARK_OBJ_AVX2_VEXPF) $(TEST_UTILS_OBJ) $(SCALAR_OBJ) $(AVX_OBJ) $(AVX_VEXPF_OBJ) $(TABLE_OBJ)
+$(BENCHMARK_AVX2_VEXPF): $(BENCHMARK_OBJ_AVX2_VEXPF) $(TEST_UTILS_OBJ) $(SCALAR_OBJ) $(AVX_OBJ) $(AVX_VEXPF_OBJ) $(ONLINE_SCALAR_OBJ) $(TABLE_OBJ)
+	$(CC) $(CFLAGS) -mavx2 $^ -o $@ -lm
+
+$(BENCHMARK_ONLINE_SCALAR): $(BENCHMARK_OBJ_ONLINE_SCALAR) $(TEST_UTILS_OBJ) $(SCALAR_OBJ) $(AVX_OBJ) $(AVX_VEXPF_OBJ) $(ONLINE_SCALAR_OBJ) $(TABLE_OBJ)
 	$(CC) $(CFLAGS) -mavx2 $^ -o $@ -lm
 
 # === Plot ===
@@ -96,6 +108,7 @@ plot: benchmark
 	./$(BENCHMARK_SCALAR)
 	./$(BENCHMARK_AVX2)
 	./$(BENCHMARK_AVX2_VEXPF)
+	./$(BENCHMARK_ONLINE_SCALAR)
 	gnuplot $(PLOT_DIR)/plot.gp
 	@echo "Plot saved to $(PLOT_OUTPUT)"
 	open $(PLOT_OUTPUT)
