@@ -3,8 +3,8 @@
 #include "softmax.h"
 #include "test_utils.h"
 
-#define MAX_SIZE 300000
-#define STEP 512
+#define MAX_SIZE 20000
+#define STEP 32
 
 int main() {
     softmax_func FUNC = softmax_table[SOFTMAX_VERSION].a;
@@ -21,9 +21,12 @@ int main() {
 
     fprintf(fp, "size,time_ms\n");
 
-    for (int size = 256; size <= MAX_SIZE; size += STEP) {
+    for (int size = 0; size <= MAX_SIZE; size += STEP) {
         float *input = generate_input(size);
         float *output = (float *) malloc(sizeof(float) * size);
+
+        // Warmup
+        FUNC(input, output, size);
 
         struct timespec start, end;
         clock_gettime(CLOCK_MONOTONIC, &start);
