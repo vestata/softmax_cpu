@@ -21,14 +21,26 @@ BENCHMARK_OBJ_AVX2    = $(BUILD_DIR)/benchmark_avx2.o
 BENCHMARK_OBJ_AVX2_VEXPF = $(BUILD_DIR)/benchmark_avx2_vexpf.o
 BENCHMARK_OBJ_ONLINE_SCALAR = $(BUILD_DIR)/benchmark_online_scalar.o
 
+ACC_OBJ_SCALAR  = $(BUILD_DIR)/acc_scalar.o
+ACC_OBJ_AVX2    = $(BUILD_DIR)/acc_avx2.o
+ACC_OBJ_AVX2_VEXPF = $(BUILD_DIR)/acc_avx2_vexpf.o
+ACC_OBJ_ONLINE_SCALAR = $(BUILD_DIR)/acc_online_scalar.o
+
 # Executables
 TARGET = $(BUILD_DIR)/main
 TEST_TARGET = $(BUILD_DIR)/test_softmax
+
 BENCHMARK_SCALAR = $(BUILD_DIR)/benchmark_scalar
 BENCHMARK_AVX2 = $(BUILD_DIR)/benchmark_avx2
 BENCHMARK_AVX2_VEXPF = $(BUILD_DIR)/benchmark_avx2_vexpf
 BENCHMARK_ONLINE_SCALAR = $(BUILD_DIR)/benchmark_online_scalar
 PLOT_OUTPUT = $(PLOT_DIR)/softmax_plot.png
+
+ACC_SCALAR = $(BUILD_DIR)/acc_scalar
+ACC_AVX2 = $(BUILD_DIR)/acc_avx2
+ACC_AVX2_VEXPF = $(BUILD_DIR)/acc_avx2_vexpf
+ACC_ONLINE_SCALAR = $(BUILD_DIR)/acc_online_scalar
+ACC_PLOT_OUTPUT = $(PLOT_DIR)/acc_softmax_plot.png
 
 .PHONY: all clean test benchmark plot
 
@@ -78,6 +90,18 @@ $(BENCHMARK_OBJ_AVX2_VEXPF): $(TEST_DIR)/benchmark.c | $(BUILD_DIR)
 $(BENCHMARK_OBJ_ONLINE_SCALAR): $(TEST_DIR)/benchmark.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=3 -c $< -o $@
 
+$(ACC_OBJ_SCALAR): $(TEST_DIR)/benchmark_accuracy.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=0 -c $< -o $@
+
+$(ACC_OBJ_AVX2): $(TEST_DIR)/benchmark_accuracy.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=1 -mavx2 -c $< -o $@
+
+$(ACC_OBJ_AVX2_VEXPF): $(TEST_DIR)/benchmark_accuracy.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=2 -mavx2 -c $< -o $@
+
+$(ACC_OBJ_ONLINE_SCALAR): $(TEST_DIR)/benchmark_accuracy.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=3 -c $< -o $@
+
 # Targets
 $(TARGET): $(MAIN_OBJ) $(SCALAR_OBJ) $(AVX_OBJ) $(AVX_VEXPF_OBJ) $(ONLINE_SCALAR_OBJ) $(TABLE_OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ -lm
@@ -105,7 +129,24 @@ $(BENCHMARK_AVX2_VEXPF): $(BENCHMARK_OBJ_AVX2_VEXPF) $(BENCHMARK_COMMON)
 $(BENCHMARK_ONLINE_SCALAR): $(BENCHMARK_OBJ_ONLINE_SCALAR) $(BENCHMARK_COMMON)
 	$(CC) $(CFLAGS) -mavx2 $^ -o $@ -lm
 
-# === Plot ===
+# Accuracy Executables
+accuracy: $(ACC_SCALAR) $(ACC_AVX2) $(ACC_AVX2_VEXPF) $(ACC_ONLINE_SCALAR)
+
+ACC_COMMON = $(TEST_UTILS_OBJ) $(SCALAR_OBJ) $(AVX_OBJ) $(AVX_VEXPF_OBJ) $(ONLINE_SCALAR_OBJ) $(TABLE_OBJ)
+
+$(ACC_SCALAR): $(ACC_OBJ_SCALAR) $(ACC_COMMON)
+	$(CC) $(CFLAGS) -mavx2 $^ -o $@ -lm
+
+$(ACC_AVX2): $(ACC_OBJ_AVX2) $(ACC_COMMON)
+	$(CC) $(CFLAGS) -mavx2 $^ -o $@ -lm
+
+$(ACC_AVX2_VEXPF): $(ACC_OBJ_AVX2_VEXPF) $(ACC_COMMON)
+	$(CC) $(CFLAGS) -mavx2 $^ -o $@ -lm
+
+$(ACC_ONLINE_SCALAR): $(ACC_OBJ_ONLINE_SCALAR) $(ACC_COMMON)
+	$(CC) $(CFLAGS) -mavx2 $^ -o $@ -lm
+
+# Plot Execution Time
 plot: benchmark
 	taskset -c 0 ./$(BENCHMARK_SCALAR)
 	taskset -c 0 ./$(BENCHMARK_AVX2)
@@ -115,6 +156,16 @@ plot: benchmark
 	@echo "Plot saved to $(PLOT_OUTPUT)"
 	open $(PLOT_OUTPUT)
 
+# Plot Accuracy
+acc: accuracy
+	taskset -c 0 ./$(ACC_SCALAR)
+	taskset -c 0 ./$(ACC_AVX2)
+	taskset -c 0 ./$(ACC_AVX2_VEXPF)
+	taskset -c 0 ./$(ACC_ONLINE_SCALAR)
+	gnuplot $(PLOT_DIR)/plot_acc.gp
+	@echo "Plot saved to $(ACC_PLOT_OUTPUT)"
+	open $(ACC_PLOT_OUTPUT)
+
 clean:
-	rm -rf $(BUILD_DIR) $(DATA_DIR) $(PLOT_OUTPUT)
+	rm -rf $(BUILD_DIR) $(DATA_DIR) $(PLOT_OUTPUT) $(ACC_PLOT_OUTPUT)
 

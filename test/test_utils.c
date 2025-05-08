@@ -24,3 +24,14 @@ bool check_result(const float *output, const float *check, int size)
     }
     return 1;
 }
+
+float compute_max_error(const float *output, const float *baseline, int size)
+{
+    float max_error = 0.0f;
+    for (int i = 0; i < size; i++) {
+        float diff = fabsf(output[i] - baseline[i]);
+        if (diff > max_error)
+            max_error = diff;
+    }
+    return max_error;
+}
