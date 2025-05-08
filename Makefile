@@ -105,10 +105,10 @@ $(BENCHMARK_ONLINE_SCALAR): $(BENCHMARK_OBJ_ONLINE_SCALAR) $(TEST_UTILS_OBJ) $(S
 
 # === Plot ===
 plot: benchmark
-	./$(BENCHMARK_SCALAR)
-	./$(BENCHMARK_AVX2)
-	./$(BENCHMARK_AVX2_VEXPF)
-	./$(BENCHMARK_ONLINE_SCALAR)
+	taskset -c 0 ./$(BENCHMARK_SCALAR)
+	taskset -c 0 ./$(BENCHMARK_AVX2)
+	taskset -c 0 ./$(BENCHMARK_AVX2_VEXPF)
+	taskset -c 0 ./$(BENCHMARK_ONLINE_SCALAR)
 	gnuplot $(PLOT_DIR)/plot.gp
 	@echo "Plot saved to $(PLOT_OUTPUT)"
 	open $(PLOT_OUTPUT)
