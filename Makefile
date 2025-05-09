@@ -17,11 +17,13 @@ TEST_UTILS_OBJ = $(BUILD_DIR)/test_utils.o
 TEST_SOFTMAX_OBJ = $(BUILD_DIR)/test_softmax.o
 
 BENCHMARK_OBJ_SCALAR  = $(BUILD_DIR)/benchmark_scalar.o
+BENCHMARK_OBJ_SCALAR_FASTEXP = $(BUILD_DIR)/benchmark_scalar_fastexp.o
 BENCHMARK_OBJ_AVX2    = $(BUILD_DIR)/benchmark_avx2.o
 BENCHMARK_OBJ_AVX2_VEXPF = $(BUILD_DIR)/benchmark_avx2_vexpf.o
 BENCHMARK_OBJ_ONLINE_SCALAR = $(BUILD_DIR)/benchmark_online_scalar.o
 
 ACC_OBJ_SCALAR  = $(BUILD_DIR)/acc_scalar.o
+ACC_OBJ_SCALAR_FASTEXP = $(BUILD_DIR)/acc_scalar_fastexp.o
 ACC_OBJ_AVX2    = $(BUILD_DIR)/acc_avx2.o
 ACC_OBJ_AVX2_VEXPF = $(BUILD_DIR)/acc_avx2_vexpf.o
 ACC_OBJ_ONLINE_SCALAR = $(BUILD_DIR)/acc_online_scalar.o
@@ -31,12 +33,14 @@ TARGET = $(BUILD_DIR)/main
 TEST_TARGET = $(BUILD_DIR)/test_softmax
 
 BENCHMARK_SCALAR = $(BUILD_DIR)/benchmark_scalar
+BENCHMARK_SCALAR_FASTEXP = $(BUILD_DIR)/benchmark_scalar_fastexp
 BENCHMARK_AVX2 = $(BUILD_DIR)/benchmark_avx2
 BENCHMARK_AVX2_VEXPF = $(BUILD_DIR)/benchmark_avx2_vexpf
 BENCHMARK_ONLINE_SCALAR = $(BUILD_DIR)/benchmark_online_scalar
 PLOT_OUTPUT = $(PLOT_DIR)/softmax_plot.png
 
 ACC_SCALAR = $(BUILD_DIR)/acc_scalar
+ACC_SCALAR_FASTEXP = $(BUILD_DIR)/acc_scalar_fastexp
 ACC_AVX2 = $(BUILD_DIR)/acc_avx2
 ACC_AVX2_VEXPF = $(BUILD_DIR)/acc_avx2_vexpf
 ACC_ONLINE_SCALAR = $(BUILD_DIR)/acc_online_scalar
@@ -54,6 +58,9 @@ $(DATA_DIR):
 	@mkdir -p $(DATA_DIR)
 
 # === Object Rules ===
+$(TABLE_OBJ): $(SRC_DIR)/softmax.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
 $(SCALAR_OBJ): $(SRC_DIR)/scalar.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -65,9 +72,6 @@ $(AVX_OBJ): $(SRC_DIR)/avx.c | $(BUILD_DIR)
 
 $(AVX_VEXPF_OBJ): $(SRC_DIR)/avx_vexpf.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -mavx2 -c $< -o $@
-
-$(TABLE_OBJ): $(SRC_DIR)/softmax.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
 
 $(MAIN_OBJ): $(SRC_DIR)/main.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -81,43 +85,52 @@ $(TEST_SOFTMAX_OBJ): $(TEST_DIR)/test_softmax.c | $(BUILD_DIR)
 $(BENCHMARK_OBJ_SCALAR): $(TEST_DIR)/benchmark.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=0 -c $< -o $@
 
-$(BENCHMARK_OBJ_AVX2): $(TEST_DIR)/benchmark.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=1 -mavx2 -c $< -o $@
+$(BENCHMARK_OBJ_SCALAR_FASTEXP): $(TEST_DIR)/benchmark.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=1 -c $< -o $@
 
-$(BENCHMARK_OBJ_AVX2_VEXPF): $(TEST_DIR)/benchmark.c | $(BUILD_DIR)
+$(BENCHMARK_OBJ_AVX2): $(TEST_DIR)/benchmark.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=2 -mavx2 -c $< -o $@
 
+$(BENCHMARK_OBJ_AVX2_VEXPF): $(TEST_DIR)/benchmark.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=3 -mavx2 -c $< -o $@
+
 $(BENCHMARK_OBJ_ONLINE_SCALAR): $(TEST_DIR)/benchmark.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=3 -c $< -o $@
+	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=4 -c $< -o $@
 
 $(ACC_OBJ_SCALAR): $(TEST_DIR)/benchmark_accuracy.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=0 -c $< -o $@
 
-$(ACC_OBJ_AVX2): $(TEST_DIR)/benchmark_accuracy.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=1 -mavx2 -c $< -o $@
+$(ACC_OBJ_SCALAR_FASTEXP): $(TEST_DIR)/benchmark_accuracy.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=1 -c $< -o $@
 
-$(ACC_OBJ_AVX2_VEXPF): $(TEST_DIR)/benchmark_accuracy.c | $(BUILD_DIR)
+$(ACC_OBJ_AVX2): $(TEST_DIR)/benchmark_accuracy.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=2 -mavx2 -c $< -o $@
 
+$(ACC_OBJ_AVX2_VEXPF): $(TEST_DIR)/benchmark_accuracy.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=3 -mavx2 -c $< -o $@
+
 $(ACC_OBJ_ONLINE_SCALAR): $(TEST_DIR)/benchmark_accuracy.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=3 -c $< -o $@
+	$(CC) $(CFLAGS) -DSOFTMAX_VERSION=4 -c $< -o $@
 
 # Targets
 $(TARGET): $(MAIN_OBJ) $(SCALAR_OBJ) $(AVX_OBJ) $(AVX_VEXPF_OBJ) $(ONLINE_SCALAR_OBJ) $(TABLE_OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ -lm
 
-$(TEST_TARGET): $(TEST_SOFTMAX_OBJ) $(SCALAR_OBJ)
+$(TEST_TARGET): $(TEST_SOFTMAX_OBJ) $(SCALAR_OBJ) $(AVX_OBJ) $(AVX_VEXPF_OBJ) $(ONLINE_SCALAR_OBJ) $(TABLE_OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ -lm
 
 test: $(TEST_TARGET)
 	./$(TEST_TARGET)
 
 # Benchmark Executables
-benchmark: $(BENCHMARK_SCALAR) $(BENCHMARK_AVX2) $(BENCHMARK_AVX2_VEXPF) $(BENCHMARK_ONLINE_SCALAR)
+benchmark: $(BENCHMARK_SCALAR) $(BENCHMARK_SCALAR_FASTEXP) $(BENCHMARK_AVX2) $(BENCHMARK_AVX2_VEXPF) $(BENCHMARK_ONLINE_SCALAR)
 
 BENCHMARK_COMMON = $(TEST_UTILS_OBJ) $(SCALAR_OBJ) $(AVX_OBJ) $(AVX_VEXPF_OBJ) $(ONLINE_SCALAR_OBJ) $(TABLE_OBJ)
 
 $(BENCHMARK_SCALAR): $(BENCHMARK_OBJ_SCALAR) $(BENCHMARK_COMMON)
+	$(CC) $(CFLAGS) -mavx2 $^ -o $@ -lm
+
+$(BENCHMARK_SCALAR_FASTEXP): $(BENCHMARK_OBJ_SCALAR_FASTEXP) $(BENCHMARK_COMMON)
 	$(CC) $(CFLAGS) -mavx2 $^ -o $@ -lm
 
 $(BENCHMARK_AVX2): $(BENCHMARK_OBJ_AVX2) $(BENCHMARK_COMMON)
@@ -130,11 +143,14 @@ $(BENCHMARK_ONLINE_SCALAR): $(BENCHMARK_OBJ_ONLINE_SCALAR) $(BENCHMARK_COMMON)
 	$(CC) $(CFLAGS) -mavx2 $^ -o $@ -lm
 
 # Accuracy Executables
-accuracy: $(ACC_SCALAR) $(ACC_AVX2) $(ACC_AVX2_VEXPF) $(ACC_ONLINE_SCALAR)
+accuracy: $(ACC_SCALAR) $(ACC_SCALAR_FASTEXP) $(ACC_AVX2) $(ACC_AVX2_VEXPF) $(ACC_ONLINE_SCALAR)
 
 ACC_COMMON = $(TEST_UTILS_OBJ) $(SCALAR_OBJ) $(AVX_OBJ) $(AVX_VEXPF_OBJ) $(ONLINE_SCALAR_OBJ) $(TABLE_OBJ)
 
 $(ACC_SCALAR): $(ACC_OBJ_SCALAR) $(ACC_COMMON)
+	$(CC) $(CFLAGS) -mavx2 $^ -o $@ -lm
+
+$(ACC_SCALAR_FASTEXP): $(ACC_OBJ_SCALAR_FASTEXP) $(ACC_COMMON)
 	$(CC) $(CFLAGS) -mavx2 $^ -o $@ -lm
 
 $(ACC_AVX2): $(ACC_OBJ_AVX2) $(ACC_COMMON)
@@ -149,6 +165,7 @@ $(ACC_ONLINE_SCALAR): $(ACC_OBJ_ONLINE_SCALAR) $(ACC_COMMON)
 # Plot Execution Time
 plot: benchmark
 	taskset -c 0 ./$(BENCHMARK_SCALAR)
+	taskset -c 0 ./$(BENCHMARK_SCALAR_FASTEXP)
 	taskset -c 0 ./$(BENCHMARK_AVX2)
 	taskset -c 0 ./$(BENCHMARK_AVX2_VEXPF)
 	taskset -c 0 ./$(BENCHMARK_ONLINE_SCALAR)
@@ -159,6 +176,7 @@ plot: benchmark
 # Plot Accuracy
 acc: accuracy
 	taskset -c 0 ./$(ACC_SCALAR)
+	taskset -c 0 ./$(ACC_SCALAR_FASTEXP)
 	taskset -c 0 ./$(ACC_AVX2)
 	taskset -c 0 ./$(ACC_AVX2_VEXPF)
 	taskset -c 0 ./$(ACC_ONLINE_SCALAR)

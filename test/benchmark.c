@@ -4,7 +4,7 @@
 #include "test_utils.h"
 
 #define MAX_SIZE 20000
-#define STEP 32
+#define STEP 128
 #define REPEAT 20
 
 int main() {

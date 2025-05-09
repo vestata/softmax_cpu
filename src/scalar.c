@@ -17,3 +17,22 @@ void softmax_scalar(const float *input, float *output, int size)
         output[i] /= sum;
     }
 }
+
+void safe_softmax_fastexp(const float *input, float *output, int size)
+{
+    float max = -FLT_MAX;
+    for (int i = 0; i < size; i++) {
+        if (input[i] > max)
+            max = input[i];
+    }
+
+    float sum = 0.0f;
+    for (int i = 0; i < size; i++) {
+        output[i] = fast_exp(input[i] - max);
+        sum += output[i];
+    }
+
+    for (int i = 0; i < size; i++) {
+        output[i] /= sum;
+    }
+}

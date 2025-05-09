@@ -10,6 +10,7 @@ set key outside top center
 
 plot \
     'data/error_softmax_scalar.csv'        using 1:2 with lines title 'Safe softmax(Baseline)', \
+	'data/error_safe_softmax_fastexp.csv' using 1:2 with lines title 'Scalar fast exp', \
     'data/error_softmax_avx2.csv'           using 1:2 with lines title 'AVX2', \
     'data/error_softmax_avx2_vexpf.csv'     using 1:2 with lines title 'AVX2_VEXPF', \
     'data/error_softmax_online_scalar.csv' using 1:2 with lines title 'Online_scalar'
