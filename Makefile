@@ -162,6 +162,52 @@ $(ACC_AVX2_VEXPF): $(ACC_OBJ_AVX2_VEXPF) $(ACC_COMMON)
 $(ACC_ONLINE_SCALAR): $(ACC_OBJ_ONLINE_SCALAR) $(ACC_COMMON)
 	$(CC) $(CFLAGS) -mavx2 $^ -o $@ -lm
 
+###################################################################
+CSV_PREFIX := $(DATA_DIR)/scalar_opt_
+GP_FILE    := $(PLOT_DIR)/plot_scalar_opt.gp
+PNG_OUT    := $(PLOT_DIR)/scalar_opt_time.png
+
+# scalar softmax with different GCC optimization
+OPT_LEVELS := O0 O1 O2 O3 Ofast
+
+CORE_OBJS  := $(TEST_UTILS_OBJ) $(AVX_OBJ) $(AVX_VEXPF_OBJ) \
+              $(ONLINE_SCALAR_OBJ) $(TABLE_OBJ)
+
+# build scalar_O*.o
+define SCALAR_OBJ_TEMPLATE
+$(BUILD_DIR)/scalar_$(1).o: $(SRC_DIR)/scalar.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -$(1) -c $$< -o $$@
+endef
+$(foreach o,$(OPT_LEVELS),$(eval $(call SCALAR_OBJ_TEMPLATE,$(o))))
+
+# build branchmark_O*.o
+define BENCH_TEMPLATE
+$(BUILD_DIR)/bench_scalar_$(1): $(TEST_DIR)/benchmark.c $(BUILD_DIR)/scalar_$(1).o $(CORE_OBJS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -$(1) -DSOFTMAX_VERSION=0 $$^ -o $$@ -lm
+endef
+$(foreach o,$(OPT_LEVELS),$(eval $(call BENCH_TEMPLATE,$(o))))
+
+.PHONY: scalar_opt_bench
+
+# Build
+scalar_opt_bench: $(foreach o,$(OPT_LEVELS),$(BUILD_DIR)/bench_scalar_$(o)) | $(DATA_DIR)
+	@echo "=== start scalar safe softmax optimization benchmark ==="
+	@for exe in $^ ; do \
+		opt=$$(echo $$exe | sed -E 's/.*bench_scalar_(O[^/]*)/\1/'); \
+		tmp=data/time_softmax_scalar.csv ; \
+		out=$(CSV_PREFIX)$${opt}_time.csv ; \
+		rm -f $$tmp ; \
+		taskset -c 0 $$exe ; \
+		if [ -f $$tmp ]; then mv $$tmp $$out; fi ; \
+		echo "  ✓ $$out" ; \
+	done
+	@echo "=== Plot ==="
+	@gnuplot $(GP_FILE)
+	@echo "PNG_OUTPUT: $(PNG_OUT)"
+	open $(PNG_OUT)
+
+###################################################################
+
 # Plot Execution Time
 plot: benchmark
 	taskset -c 0 ./$(BENCHMARK_SCALAR)
