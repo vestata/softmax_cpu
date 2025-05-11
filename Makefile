@@ -187,9 +187,24 @@ $(BUILD_DIR)/bench_scalar_$(1): $(TEST_DIR)/benchmark.c $(BUILD_DIR)/scalar_$(1)
 endef
 $(foreach o,$(OPT_LEVELS),$(eval $(call BENCH_TEMPLATE,$(o))))
 
-.PHONY: scalar_opt_bench
+# build scalar_0*.s
+ASM_DIR := $(BUILD_DIR)/asm
+$(ASM_DIR):
+	mkdir -p $(ASM_DIR)
 
-# Build
+# This flag make gcc gives more comments in the asm
+CFLAGS_FOR_ASM := -fverbose-asm
+
+define SCALAR_ASM_TEMPLATE
+$(ASM_DIR)/scalar_$(1).s: $(SRC_DIR)/scalar.c | $(ASM_DIR)
+	@echo "Generating ASM for $(SRC_DIR)/scalar.c with -$(1) -> $$@"
+	$(CC) $(CFLAGS) $(CFLAGS_FOR_ASM) -$(1) -S $$< -o $$@
+endef
+$(foreach o,$(OPT_LEVELS),$(eval $(call SCALAR_ASM_TEMPLATE,$(o))))
+
+.PHONY: scalar_opt_bench scalar_opt_asm
+
+# Build execution time benchmark
 scalar_opt_bench: $(foreach o,$(OPT_LEVELS),$(BUILD_DIR)/bench_scalar_$(o)) | $(DATA_DIR)
 	@echo "=== start scalar safe softmax optimization benchmark ==="
 	@for exe in $^ ; do \
@@ -205,6 +220,12 @@ scalar_opt_bench: $(foreach o,$(OPT_LEVELS),$(BUILD_DIR)/bench_scalar_$(o)) | $(
 	@gnuplot $(GP_FILE)
 	@echo "PNG_OUTPUT: $(PNG_OUT)"
 	open $(PNG_OUT)
+
+# Build x86 assembly
+scalar_opt_asm: $(foreach o,$(OPT_LEVELS),$(ASM_DIR)/scalar_$(o).s)
+	@echo "=== Assembly files generated in $(ASM_DIR) ==="
+	@ls -l $(ASM_DIR)/scalar_*.s
+	@echo "=== Asm files generated ==="
 
 ###################################################################
 
